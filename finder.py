@@ -55,8 +55,8 @@ def get_class_end_line(file, classline):
                 break
 
         for j in range(len(lines_text)):
-            if "public void .ctor()" in lines_text[j]:
-                return lines_num[j]
+            if "//Namespace" in lines_text[j]:
+                return lines_num[j - 1]
 
 
 def get_function_in_class_offset(file, function_name: str, class_start_line, class_end_line):
