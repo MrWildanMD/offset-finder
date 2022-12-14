@@ -55,7 +55,7 @@ def get_class_end_line(file, classline):
                 break
 
         for j in range(len(lines_text)):
-            if "//Namespace" in lines_text[j]:
+            if "Namespace" in lines_text[j]:
                 return lines_num[j - 1]
 
 
