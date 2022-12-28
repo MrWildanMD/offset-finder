@@ -1,5 +1,4 @@
 import dearpygui.dearpygui as imgui
-from demo import show_demo
 from tkinter import *
 from tkinter import filedialog
 import re
