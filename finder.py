@@ -2,7 +2,15 @@ import dearpygui.dearpygui as imgui
 from demo import show_demo
 from tkinter import *
 from tkinter import filedialog
+import re
 
+global_class_line = 0
+global_class_end_line = 0
+global_function_line = 0
+
+def is_match(regex, text):
+    pattern = re.compile(regex)
+    return pattern.search(text) is not None
 
 def string_before(value, b):
     pos_b = value.find(b)
@@ -42,29 +50,31 @@ def get_class_line(file, classname: str):
 
 
 def get_class_end_line(file, classline):
-    endline = classline + 150
     with open(file, 'r', encoding='utf-8') as cel:
-        # line_numbers = [classline, endline]
         lines_num = []
         lines_text = []
         for i, line in enumerate(cel):
-            if i in range(classline, endline):
+            if i >= classline:
                 lines_num.append(i)
                 lines_text.append(line.strip())
-            elif i > endline:
-                break
-
-        for j in range(len(lines_text)):
-            if "Namespace" in lines_text[j]:
-                return lines_num[j - 1]
+                for j, line in enumerate(lines_text):
+                    if "Namespace" in lines_text[j]:
+                        return lines_num[j - 1]
 
 
-def get_function_in_class_offset(file, function_name: str, class_start_line, class_end_line):
+def get_methods_line(file, classline, class_end_line):
+    with open(file, 'r', encoding='utf-8') as methodlen:
+        for l_no, line in enumerate(methodlen):
+            if l_no >= classline and l_no <= class_end_line:
+                if "Methods" in line:
+                    return l_no
+
+def get_function_in_class_offset(file, function_name: str, methods_line, class_end_line):
     with open(file, 'r', encoding='utf-8') as fnco:
         class_method = []
         method_lines = []
         for i, line in enumerate(fnco):
-            if i in range(class_start_line, class_end_line):
+            if i in range(methods_line, class_end_line):
                 class_method.append(line.strip())
                 method_lines.append(i)
             elif i > class_end_line:
@@ -76,12 +86,12 @@ def get_function_in_class_offset(file, function_name: str, class_start_line, cla
                 return string_between(offset_line, "Offset: ", " VA:")
 
 
-def get_function_in_class_rva(file, function_name: str, class_start_line, class_end_line):
+def get_function_in_class_rva(file, function_name: str, methods_line, class_end_line):
     with open(file, 'r', encoding='utf-8') as fnco:
         class_method = []
         method_lines = []
         for i, line in enumerate(fnco):
-            if i in range(class_start_line, class_end_line):
+            if i in range(methods_line, class_end_line):
                 class_method.append(line.strip())
                 method_lines.append(i)
             elif i > class_end_line:
@@ -117,15 +127,26 @@ def functionname_text_input_controller(sender, data):
 
 def find_offset_button_controller(sender, data):
     # imgui.set_value("tableresult", value=[["classcolumn"]["Halo"]])
+    # print(get_class_end_line(imgui.get_value("inpath"), get_class_line(
+    #     imgui.get_value("inpath"), imgui.get_value('classname'))))
+    # print(get_function_in_class_offset(imgui.get_value("inpath"), imgui.get_value(
+    #     "functionname"), get_class_line(imgui.get_value("inpath"), imgui.get_value("classname")), get_class_end_line(imgui.get_value("inpath"), get_class_line(
+    #         imgui.get_value("inpath"), imgui.get_value("classname")))))
+    # print(get_methods_line(imgui.get_value("inpath"), get_class_line(
+    #     imgui.get_value("inpath"), imgui.get_value("classname")), get_class_end_line(imgui.get_value("inpath"), get_class_line(
+    #         imgui.get_value("inpath"), imgui.get_value("classname")))))
+    # print(get_class_line(imgui.get_value("inpath"), imgui.get_value("classname")))
+    global_class_line = get_class_line(
+        imgui.get_value("inpath"), imgui.get_value("classname"))
+    global_class_end_line = get_class_end_line(
+        imgui.get_value("inpath"), global_class_line)
+    global_methods_line = get_methods_line(imgui.get_value("inpath"), global_class_line, global_class_end_line)
     with imgui.table_row(parent="tableresult"):
         imgui.add_text(imgui.get_value("classname"))
         imgui.add_text(imgui.get_value("functionname"))
-        imgui.add_text(get_function_in_class_offset(imgui.get_value("inpath"), imgui.get_value(
-            "functionname"), get_class_line(imgui.get_value("inpath"), imgui.get_value("classname")), get_class_end_line(imgui.get_value("inpath"), get_class_line(
-                imgui.get_value("inpath"), imgui.get_value("classname")))))
-        imgui.add_text(get_function_in_class_rva(imgui.get_value("inpath"), imgui.get_value(
-            "functionname"), get_class_line(imgui.get_value("inpath"), imgui.get_value("classname")), get_class_end_line(imgui.get_value("inpath"), get_class_line(
-                imgui.get_value("inpath"), imgui.get_value("classname")))))
+        imgui.add_text(get_function_in_class_offset(imgui.get_value("inpath"), imgui.get_value("functionname"), global_methods_line, global_class_end_line))
+        imgui.add_text(get_function_in_class_rva(imgui.get_value("inpath"), imgui.get_value("functionname"), global_methods_line, global_class_end_line))
+    print(get_function_in_class_offset(imgui.get_value("inpath"), imgui.get_value("functionname"), global_methods_line, global_class_end_line))
 
 
 def result_table_controller(sender, data):

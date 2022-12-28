@@ -1,2 +1,5 @@
 __pycache__/
 imgui.ini
+demo.py
+finderimgui.py
+testwindow.py
